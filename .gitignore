@@ -1,4 +1,4 @@
 bundle
 node_modules
 package-lock.json
-src/constants/auth.js
+src/js/constants/auth.js
