@@ -32,13 +32,14 @@ module.exports = {
   
   output: {
     path: __dirname + "/src/",
-    filename: "client.min.js"
+    filename: debug ? "client.deb.js" : "client.min.js"
   },
   
   plugins: debug ? [] : [
 
     new webpack.optimize.UglifyJsPlugin({
       beautify: false,
+      /*
       mangle: {
         screw_ie8: true,
         keep_fnames: true
@@ -46,6 +47,7 @@ module.exports = {
       compress: {
         screw_ie8: true
       },
+      */
       comments: false
     }),
     //new webpack.optimize.UglifyJsPlugin({ mangle: false, sourcemap: false }),

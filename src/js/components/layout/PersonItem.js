@@ -7,6 +7,7 @@ import {connect} from 'react-redux';
 import {acSignout,acSignin} from '../../actions/index';
 import FlatButton from 'material-ui/FlatButton';
 import Chip from 'material-ui/Chip';
+import Spinner from 'react-spinner-material';
 
 // this is  smart component, which needs access to the current auth status and info
 @connect(store => {
@@ -30,6 +31,7 @@ class PersonItem extends React.Component {
     this.props.dispatch (acSignout());
   }
 
+
   
   render() {
     let item;
@@ -44,9 +46,16 @@ class PersonItem extends React.Component {
       </span>;
     }
     else if (props.auth.status === cs.status.AUTH_AWAITING_RESPONSE || props.auth.status === cs.status.AUTH_AWAITING_USER) {
-      item = <span></span>;
+      item = <span>
+        <Spinner
+          size={30}
+          spinnerColor={"#ffffff"}
+          spinnerWidth={2}
+          visible={true} />
+      </span>;
     }
     else {
+     
       item = <span><FlatButton style={{color:"white"}} onClick={this.signin.bind(this)} label="Sign in" /></span>;
     }
 

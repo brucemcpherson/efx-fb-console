@@ -6,7 +6,9 @@ from './delegates';
 const initialState = {
   counter: 0, // this is used to generate account numbers
 
-
+  selectedAccounts:[],
+  selectedBosses:[],
+  
   // fetches from redis go here
   everything: {
     active: false,
@@ -21,11 +23,7 @@ const initialState = {
   // and end up here
   pageResults: {
     accounts: {},
-    accountsRemove: {},
-    accountsAdd: {},
-    accountsUpdate: {},
     bosses: {},
-    bossesAdd: {},
     bossesRemove: {}
   }
 
@@ -40,58 +38,36 @@ export default function(state = initialState, action) {
     cs.actions.FETCH_BOSSES,
     cs.actions.REMOVE_ACCOUNT,
     cs.actions.ADD_BOSS,
-    cs.actions.REMOVE_BOSS
+    cs.actions.REMOVE_BOSS,
+    cs.actions.FETCH_ACCOUNTS,
+    cs.actions.UPDATE_ACCOUNT
   ];
 
-  const newState = efResultDelegate(action, acts, state, initialState);
-  if (newState) {
-    return newState;
-  }
+  state  = efResultDelegate(action, acts, state, initialState) || state;
 
+  // this is for extra processing
   switch (action.type) {
-
-    case cs.actions.COUNTER_ACCOUNTS:
+      
+    case cs.actions.ACCOUNT_LOCALUPDATE:
       {
-        return {...state,
-          counter: action.payload
-        };
-      }
-
-      // this is serviced by a firebase call back so is dealy with syncronously
-    case cs.actions.FETCH_ACCOUNTS:
-      {
-
-        state = {...state
-        };
-        let selectedItems = state.pageResults.accounts.selectedItems || [];
-        selectedItems = selectedItems.filter(d => Object.keys(action.payload).indexOf(d) !== -1);
-        if (!selectedItems.length && action.payload) {
-          selectedItems = [Object.keys(action.payload)[Object.keys(action.payload).length - 1]];
-        }
-
-        state.pageResults.accounts = {
-          data: action.payload,
-          selectedItems
-        };
-
+        state = {...state};
+        // patch the data active status
+        const item = state.pageResults.accounts.data[action.payload.accountId];
+        if (item)item.active = action.payload.ob.active ? true : false;
         return state;
       }
-
-      // record which accounts are currently selected
-    case cs.actions.ACCOUNT_SELECTED_ROWS:
+      
+    case cs.actions.ACCOUNTS_SELECTED:
       {
-        state = {...state
-        };
-        state.pageResults[action.payload.pageResults].selectedItems = action.payload.selectedItems;
-
-        return state;
+        const selectedItems = action.payload;
+        return {...state, selectedAccounts:selectedItems};
       }
-
-    case cs.actions.ACCOUNTS_RESULT_CLEAR:
+      
+    case cs.actions.BOSSES_SELECTED:
       {
-        return  {...state,pageResults:{...initialState.pageResults}};
+        return {...state, selectedBosses:action.payload};
       }
-
+    
 
   }
 

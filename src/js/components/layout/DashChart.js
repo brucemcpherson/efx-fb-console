@@ -1,5 +1,7 @@
 import React from "react";
 import XCard from '../XCard';
+import WorkingOn from '../WorkingOn';
+import Screwed from '../Screwed';
 
 import { ResponsiveContainer,LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'; 
 import {  extent as d3Extent, max as d3Max } from 'd3-array';
@@ -8,20 +10,36 @@ import {  format as d3Format } from 'd3-format';
 
 export default class extends React.Component {
 
-
-
   render() {
     
     const props = this.props;
+    
+    // nothing to do yet
+    const accountId = props.accounts.selectedAccounts[0];
+    if (!accountId) return <span></span>;
+    
+    // here's where the account API results are stored
+    const pp = props.stats.pageResults.stats;
+    const ac = props.accounts.pageResults.accounts;
 
-    // we'll use the selected account later
-    const place = props.accounts.pageResults.accounts;
-    const selectedAccount = place.selectedItems ? place.selectedItems[0] : "";
-    const slotPlace = props.stats.pageResults.stats;
-    const slotData = slotPlace ? slotPlace.slotData : [];
+    if (!pp.ready) {
+      return <WorkingOn workingOn = {"getting your stats for account " + accountId }/>;
+    }
+
+    if (accountId !== pp.things.data.accountId) {
+      return <Screwed screwed = {`Expected to be working on ${accountId} but have been handed ${pp.things.data.accountId}`} /> ;
+    }
+
+    const acOb = ac.data[accountId];
+    if (!acOb) {
+      return <Screwed screwed = {`data not available for ${accountId}`} /> ;
+    }
+
+    // the data to be plotted
+    const slotData = pp.slotData || [];
     
     let theChart;
-    if (slotData && slotData.length) {
+    if (slotData.length) {
 
       // get the d3 domain, so we can make nice labels
       const domain = d3Extent (slotData, d=>new Date(d.start)); 
@@ -120,7 +138,7 @@ export default class extends React.Component {
     // now render  .. this calls a generalized version so there are quite a few props
     return  ( 
       <XCard
-        title = {`Api usage for account ${selectedAccount}`}
+        title = {`Api usage for account ${accountId}`}
         subtitle = {`all access keys`}
         content = {chartJsx}
         initiallyExpanded={true}

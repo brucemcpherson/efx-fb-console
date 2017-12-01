@@ -2,16 +2,10 @@ import React from "react";
 
 import cs from '../../constants/params';
 
-import {
-  acAccountsSelectedRows,
-}
-from '../../actions/index';
-
 
 import XCard from '../XCard';
 import XDialog from '../XDialog';
 import XTable from '../XTable';
-import CircularProgress from 'material-ui/CircularProgress';
 
 export default class extends React.Component {
 
@@ -22,108 +16,75 @@ export default class extends React.Component {
     };
   }
   
-  dispatchSelection (rows,data) {
 
-    // we'll also dispatch again to force a re-render if all boxes are unticked
-    const props = this.props;
-    const pageResults = props.pageResults;
-    const selectedItems = props.makeSelectedItems (rows, data);
-    const ad = acAccountsSelectedRows  ( {
-      selectedItems, 
-      pageResults
-    });
-    
-    if (ad) {
-      props.dispatch(ad);
-    }
-    
-    if (this.props.extraDispatch) {
-      this.props.extraDispatch (selectedItems);
-    }
-    
 
-  }
-
+  // add an item - how to do it is inherited from the 
   handleRemove = () => {
-    
-    const pp = this.props.accounts.pageResults;
-    const selectedItems = pp.accounts.selectedItems || [];
-    const selectedBosses = pp.bosses.selectedItems || [];
-    if (selectedItems.length  && this.props.auth.uid) {
-      const ad = this.props.removeAction ({
-        accountId:selectedItems[0] || "",
-        bossKeys:selectedBosses,
-        uid:this.props.auth.uid,
-        pageResults:this.props.pageResults+"Remove"
-      });        
-      if (ad) {
-        this.props.dispatch (ad);
-      }
+
+    const ad = this.props.removeAction ();
+    if (ad) {
+      this.props.dispatch (ad);
     }
-    
+
   }
 
-
+  // add an item - how to do it is inherited from the 
   handleAdd = () => {
 
-    const pageResults=this.props.pageResults;
-    const pp = this.props.accounts.pageResults["accounts"];
-    const selectedItems = pp.selectedItems || [];
-    const selectedOb = pp.data[selectedItems[0]];
-    const accountPlan = selectedOb && selectedOb.planId;
-    if (this.props.auth.uid) {
-      const ad = this.props.addAction ({
-        uid:this.props.auth.uid,
-        pageResults:pageResults+"Add",
-        accountId:selectedItems[0],
-        planId:accountPlan
-      });        
-      if (ad) {
-        this.props.dispatch (ad);
-      }
+    const ad = this.props.addAction ();        
+    if (ad) {
+      this.props.dispatch (ad);
     }
-    
+
   }
 
   
   render() {
     
     const props = this.props;
+    const data = props.data;
 
     if (props.auth.status !== cs.status.AUTH_LOGGED_IN) {
       return <span></span>;
     }
-    const pageResults=this.props.pageResults;
-    const pp = props.accounts.pageResults[pageResults];
-    const data = pp.data;
+
     if (!data) {
-      return <span></span>;
+      return <span>no data</span>;
     }
-    
-    // set the selected rows .. controlled in the store
-    const selectedItems = pp.selectedItems || [];
-    const header = props.header;
-    const rows = props.makeRows (selectedItems || [], data);
    
+   
+    // the row numbers of the selected items
+    const selectedRows = this.props.makeSelectedRows ();
+    
+    // the table header
+    const header = props.header;
+    
+    // the rows of the table
+    const rows = props.makeRows (selectedRows);
+    
+    // the values of the selected items
+    const selectedItems = props.makeSelectedItems();
+   
+    // this is the data table
     const jsx = <XTable
       header = {header}
       rows = {rows}
-      displayRowCheckbox = {true}
-      selectedRows = {this.props.makeSelectedRows (selectedItems,data)}
-      multiSelectable={this.props.multiSelectable} 
+      displayRowCheckbox = {props.displayRowCheckbox}
+      selectedRows = {selectedRows}
+      multiSelectable={props.multiSelectable} 
       onRowSelection={(rowSelection)=>{
-         this.dispatchSelection(rowSelection,data);
+         props.handleSelection(rowSelection);
       }}
       selectable={true}
      />;
 
     // the card actions for adding/removing
     
-      const cardActions= this.props.removeAction && this.props.addAction ? [{
+      const cardActions= props.removeAction && props.addAction ? [{
           name:'add',
           action:this.handleAdd.bind(this),
           primary:true,
-          disabled: rows.length >= this.props.maxRows
+          disabled: rows.length >= props.maxRows
         },{
           name:'remove',
           action:()=>this.setState ({ dialogOpen:true }),
@@ -132,10 +93,10 @@ export default class extends React.Component {
         }
       ] : null;
     
-      const dialogActions = this.props.removeAction ? [{
+      const dialogActions = props.removeAction ? [{
           name:'remove',
           action:()=>{
-            this.setState({dialogOpen:false}); 
+            this.setState({dialogOpen:false});
             this.handleRemove(); 
           }, 
           secondary:true,
@@ -147,10 +108,17 @@ export default class extends React.Component {
         }
       ] : null;
       
-    const table =  
-      <div>{rows.length || !this.props.spinner ? jsx : <CircularProgress />}</div>;
-
+    const table =  <div>{jsx}</div>;
     const content = <span>{props.extraContent}{table}</span>;
+    
+    const dialog = props.dialogContent ? 
+      <XDialog
+        content={props.dialogContent (selectedItems || [] )}
+        title = {props.dialogTitle}
+        actions = {dialogActions}
+        open = {this.state.dialogOpen}
+        close = {()=>this.setState({dialogOpen:false})}
+      /> : <span></span>;
     
     // now render  
     return  (
@@ -162,14 +130,7 @@ export default class extends React.Component {
           content={content}
           cardActions ={cardActions}
         />
-
-        <XDialog
-          content={this.props.dialogContent (selectedItems || [] )}
-          title = {this.props.dialogTitle}
-          actions = {dialogActions}
-          open = {this.state.dialogOpen}
-          close = {()=>this.setState({dialogOpen:false})}
-        />
+        {dialog}
       </span>
     );
   }

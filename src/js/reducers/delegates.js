@@ -28,8 +28,7 @@ export function delegateEveryCommentary(action, act, status) {
   const result = action.payload.result || {} ;
   const serviceOk = action.payload.success;
   const serviceStatus = serviceOk ? "OK" : "error";
-  const ok = serviceOk && 
-    Object.keys(result)
+  const ok = serviceOk && Object.keys(result)
     .every (d=> result[d].result && result[d].result.data && result[d].result.data.ok) ? true : false;
   const appError = ok ? "" : "some keys not generated";
   const code = Object.keys(result)
@@ -59,13 +58,13 @@ export function efResultDelegate  ( action, acts, state , initialState )  {
     // figure out what status is being reported
     const status = action.type.replace(/(.*)_(.*)$/, "$2");
     const act =  action.type.replace(/(.*)_(.*)$/, "$1");
-    
+
     // if i dont know how to deal with it, go away
     if (acts.indexOf(act) === -1) {
       // not one of mine
       return null;
     }
-    
+  
     // i know how to dela with these.
     switch (status) {
       
@@ -89,10 +88,23 @@ export function efResultDelegate  ( action, acts, state , initialState )  {
         return state;
       }
       
+
+        
       case "FULFILLED": {
 
+        state  = {...state};
+        const ps = [action.payload.pageResults];
+        const pp = state.pageResults;
         const result = action.payload.result;
-        const data = result ? result.data : null;
+
+        // sometime the data is in a value field, or within a pageresults value of that, or coupons
+        let data = data || (result && result.data && result.data.value  && result.data.value[ps]);
+        data = data || (result && result.data && result.data.coupons);
+        data = data || (result && result.data && result.data.value );
+        data = data || (result && result.data);
+        data = data || {};
+
+        
         const everything = {
           active:false,
           ready:true, 
@@ -101,10 +113,10 @@ export function efResultDelegate  ( action, acts, state , initialState )  {
           things:result,
           data:data  // for convenience, hoist the data up top too
         };
-        state  = {...state};
-        state.pageResults[action.payload.pageResults] = everything;
+
+        pp[ps] = everything;
         if (action.payload.cloneResults) {
-          state.pageResults[action.payload.cloneResults] = {...everything};
+          pp[action.payload.cloneResults] = {...everything};
         }
         
         return state;

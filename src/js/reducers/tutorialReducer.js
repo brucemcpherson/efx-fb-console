@@ -228,6 +228,7 @@ export default function(state = initialState, action) {
         // oops... writer in payload, writers in store
         var k = state.jsonKeys.hasOwnProperty(d) ? d : d + "s";
         var r = ap[d];
+        
         state.jsonKeys[k] = r.success ? 
           (r.result.data.keys? r.result.data.keys[0] : r.result.data.key) : 
           ("failed to generate:" + r.result.statusText + "-" + ((r.result.data && r.result.data.error) || ""));    

@@ -8,9 +8,10 @@ export default class extends React.Component {
     const headers = this.props.header.map((d, i) => {
       return <TableHeaderColumn key={i}>{d}</TableHeaderColumn>;
     });
-    
+
     const rows = this.props.rows.map((d, i) => {
-      return <TableRow key={i} selected={this.props.selectedRows && this.props.selectedRows.indexOf(i) !==-1}>{
+      const sel = this.props.selectedRows && this.props.selectedRows.indexOf(i) !==-1;
+      return <TableRow key={i} selected={sel}>{
                 d.map ( (e,j) => {
                   return <TableRowColumn key={j}>{e}</TableRowColumn>;
                 })};
@@ -18,17 +19,22 @@ export default class extends React.Component {
     });
     
     if (!headers.length) return null;
-    
+    // theres a bug in this that means it doesnt respect selected row
+    // to get round it you can change the key of the table each time
+    const tableKey = new Date().getTime();
     const xcs =
-      <Table           
+      <Table  style={{tableLayout: 'auto'}} fixedHeader={false} 
+        key={tableKey}
         multiSelectable={this.props.multiSelectable} 
         onRowSelection={this.props.onRowSelection} 
         selectable={this.props.selectable}
         allRowsSelected={this.props.allRowsSelected}>
         
-        <TableHeader
+        
+        <TableHeader 
           adjustForCheckbox={this.props.displayRowCheckbox} 
-          displaySelectAll={this.props.displaySelectAll}
+          displaySelectAll={this.props.displayRowCheckbox}
+          enableSelectAll={this.props.displayRowCheckbox}
         >
         <TableRow>{headers}</TableRow>
         </TableHeader>

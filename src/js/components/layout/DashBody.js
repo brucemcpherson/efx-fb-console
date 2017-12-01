@@ -14,7 +14,7 @@ export default class extends React.Component {
     if (props.auth.status !== cs.status.AUTH_LOGGED_IN) {
       return <NotLoggedIn place="dashboard"/>;
     }
-    const resultRoot = props.accounts.pageResults;
+    const resultRoot = props.accounts.pageResults.accounts;
     const statsRoot = props.stats.pageResults;  
     // now render
     return  ( <span>

@@ -6,6 +6,8 @@ import {
 from './delegates';
 const initialState = {
 
+  selectedKeys:[],
+  
   // fetches from redis go here
   everything: {
     active: false,
@@ -41,16 +43,19 @@ export default function(state = initialState, action) {
     cs.actions.FETCH_STATS
   ];
 
-
+  
+  // thisll get set it it was dealtwith in the delegation
   const newState = efResultDelegate(action, acts, state, initialState);
+
   if (newState) {
     // doiing a bit more tweaking if we're fetching stats
     if (action.type === cs.actions.FETCH_STATS + "_FULFILLED") {
       // convert to kb
       const data = state.pageResults[action.payload.pageResults].data;
-      if (data && data.value && data.value.rows) {
-        const columns = data.value.columns;
-        data.chunks = data.value.rows.map((d) => {
+
+      if (data && data.rows) {
+        const columns = data.columns;
+        data.chunks = data.rows.map((d) => {
           
           // objectize the row
           const nd = d.reduce ((p,c,i)=> {
@@ -81,15 +86,11 @@ export default function(state = initialState, action) {
   // non standard things
   switch (action.type) {
 
-    // record which accounts are currently selected
-    case cs.actions.STATS_SELECTED_ROWS:
+    case cs.actions.KEYS_SELECTED:
       {
-        state = { ...state
-        };
-        state.pageResults[action.payload.pageResults].selectedItems = action.payload.selectedItems;
-
-        return state;
+        return {...state, selectedKeys:action.payload};
       }
+      
 
     case cs.actions.GENERATE_SLOTS:
       {
@@ -141,15 +142,16 @@ export default function(state = initialState, action) {
     if (!state.ranges.slots || !place.data || !place.data.chunks) return null;
 
     // filter out unselected keys & scale to kb
-    const selectedItems = place.selectedItems;
+    const selectedItems = state.selectedKeys ||[];
     const filtered = place.data.chunks
-      .filter(d => !selectedItems || selectedItems.indexOf(d.coupon) !== -1);
+      .filter(d => !selectedItems.length || selectedItems.indexOf(d.coupon) !== -1);
 
-
-    // spread the stats across the slots
+    // spread the stats across the slots,
     place.slotData = state.ranges.slots.map(d => {
+
       return filtered.reduce((p, c) => {
-        if (c.slot >= d.startSlot && c.slot + c.floorWidth <= d.finishSlot) {
+
+        if (c.slot >= d.startSlot && c.slot  <= d.finishSlot) {
           ['setsize', 'getsize', 'set', 'get', 'remove'].forEach(e => {
             p[e] += (c[e] || 0);
           });

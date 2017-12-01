@@ -7,7 +7,7 @@ export default class Console extends React.Component {
 
     return ( 
       <AAWrap location={this.props.location}>
-        <ConsoleBody />
+        <ConsoleBody consolePage={"console"}/>
       </AAWrap> 
     );
   }

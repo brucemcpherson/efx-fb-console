@@ -9,12 +9,12 @@ export default class  extends React.Component {
     // what to display
     const content = this.props.content;
     const noContent = content || this.props.noContent || "";
-    
+
     return  content ? 
       <span>
         <span style={{color:indigo500}}>{content}</span>
         <CopyToClipboard text={content}>
-          <IconButton tooltip="copy"><FontIcon className="material-icons">content_copy</FontIcon></IconButton>
+          <IconButton tooltip="copy" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}><FontIcon className="material-icons">content_copy</FontIcon></IconButton>
         </CopyToClipboard>
       </span> : 
       <span>{noContent}</span>;

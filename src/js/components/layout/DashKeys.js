@@ -1,24 +1,62 @@
 import React from "react";
-import XCard from '../XCard';
-import XTable from '../XTable';
+import Screwed from '../Screwed';
+import ConsoleContent from './ConsoleContent';
+import XClipboard from '../XClipboard';
 
-
-import {acStatsSelectedRows, acGenerateSlots} from '../../actions/index';
+import {acSelectedKeys, acGenerateSlots} from '../../actions/index';
 import {  format as d3Format } from 'd3-format';
 
 export default class extends React.Component {
 
 
+  // when bosses are selected
+  setSelectedKeys (selectedItems) {
+    this.props.dispatch (acSelectedKeys(selectedItems));
+  }
+  
+  // when key is selected 
+  handleKeySelection = (rowSelection, data) => {
+
+    const dataKeys = Object.keys(data);
+
+    // this will be a collection of row indexes
+    rowSelection = rowSelection || [];
+    if (!Array.isArray(rowSelection) && rowSelection === "all") rowSelection = dataKeys.map((d,i)=>i);
+
+    // this is an array of item names where their indexes exist int theRowSelection
+    const selectedItems = dataKeys.filter((k,i)=>rowSelection.indexOf(i)!==-1 || rowSelection === "all");
+
+    // record this selection
+    this.setSelectedKeys (selectedItems);
+    
+    // and we also need to regenerate the chart data
+    const ag = acGenerateSlots();
+    if (ag){
+      this.props.dispatch(ag);
+    }
+    
+  }
+  
   render() {
     
-    const props = this.props;
-
-    // we'll use the selected account later
-    const place = props.accounts.pageResults.accounts;
-    const selectedAccount = place.selectedItems ? place.selectedItems[0] : "";
-    const dataPlace = props.stats.pageResults.stats;
-    const data = (dataPlace ? dataPlace.data : []) || [];
     
+    const props = this.props;
+    
+    // nothing to do yet
+    const accountId = props.accounts.selectedAccounts[0];
+    if (!accountId) return <span></span>;
+    
+    // here's where the account API results are stored
+    const pp = props.stats.pageResults.stats;
+
+    if (!pp.ready) return <span></span>;
+    if (accountId !== pp.things.data.accountId) {
+      return <Screwed screwed = {`Expected to be working on ${accountId} but have been handed ${pp.things.data.accountId}`} /> ;
+    }
+
+    
+    // the data to be plotted
+    const data = pp.data || [];
     const keyData = (data.chunks || [])
     .reduce((p,c)=>{
       if (!p[c.coupon]) {
@@ -29,86 +67,73 @@ export default class extends React.Component {
           getsize:0,
           remove:0
         };
-        Object.keys (p[c.coupon]).forEach (d=>p[c.coupon][d] += (c[d] || 0));
       }
+      Object.keys (p[c.coupon]).forEach (d=>p[c.coupon][d] += (c[d] || 0));
       return p;
     },{});
     
-    const header = ["Key","reads","writes","removes","kb read","kb written"];
+
     const df = d3Format(".1f");
     
-    const rows = Object.keys (keyData)
-    .map (k=>{
-        return [k,keyData[k].get,keyData[k].set,keyData[k].remove,
-          keyData[k].getsize ? df(keyData[k].getsize) : "-" ,
-          keyData[k].setsize ? df(keyData[k].setsize) : "-"];
-    });
+    // now render  .. this calls a generalized version so there are quite a few props
+    return  ( <span>
+      <div>
 
-  
-    
-    // set the selected rows .. controlled in the store
-    const selectedItems = dataPlace && dataPlace.selectedItems ?  dataPlace.selectedItems : [];
-    const makeSelectedRows = () => {
-      return selectedItems
-      .map((d)=>Object.keys(keyData).indexOf(d)).filter((d,i)=>i !== -1);
-      };
-      
-    const makeSelectedItems  = (rowSelection) => {
-      if (rowSelection === "all") {
-        return Object.keys(keyData);
-      }
-      else if (rowSelection === "none") {
-        return [];
-      }
-      else {
-        return (rowSelection || []).map((d,i)=>Object.keys(keyData)[i]);
-      }
-      
-    };
-    const tsx =  <XTable
-      header = {header}
-      rows = {rows}
-      displayRowCheckbox = {true}
-      selectable={true}
-      multiSelectable={true}
-      allRowsSelected={true}
-      onRowSelection={(rowSelection)=>{
-
-         const ad = acStatsSelectedRows  ( {
-          selectedItems:makeSelectedItems(rowSelection), 
-          pageResults:"stats"
-        });
-        if (ad) {
-          props.dispatch(ad);
-          // and we also need to regenerate the chart data
-          const ag = acGenerateSlots();
-          if (ag){
-            props.dispatch(ag);
-          }
-        }
-        
-
-      }}
-      selectedRows = {makeSelectedRows()}
-     />;
+        <ConsoleContent 
+          
+          {...props}
      
-    const csx = <div>
-      <XCard 
-        initiallyExpanded = {true}
-        title = {"Access keys"}
-        subtitle = {`Keys active in period for account ${selectedAccount}`}
-        content = {tsx}
-      />
-    </div> ;
-    
-    return (
-      <div>{csx}</div>
-    );
-    
+          data={keyData}
+          
+          
+          // whether more than one item can be selected
+          multiSelectable={true}
+
+        
+          // title
+          title = {"Access keys"}
+          
+          // show account name
+          subtitle = {`Keys active in period for account ${accountId}`}
+          
+          // the table headings
+          header={["Key","reads","writes","removes","kb read","kb written"]}
+          
+          // dont need a checkbox
+          displayRowCheckbox = {true}
+          
+          // handle selected item
+          handleSelection = {(rowSelection)=>this.handleKeySelection (rowSelection,keyData)}
+          
+          // how to figure out which items are selected
+          makeSelectedItems = {()=>props.stats.selectedKeys}
+          
+          // map selected items to their row numbers
+          makeSelectedRows={()=> {
+          
+            // find which rows hold keys that are selected
+            const dataKeys = Object.keys(keyData);
+            return props.stats.selectedKeys.map((d)=>dataKeys.indexOf(d)).filter((d,i)=>d !== -1);
+          }}
+          
+          // how to generate rows in the table
+          makeRows={(selectedRows)=>{
+
+            // selected rows not necessary
+            const rows = Object.keys (keyData)
+              .map (k=>{
+                return [<XClipboard content={k}/>,keyData[k].get,keyData[k].set,keyData[k].remove,
+                keyData[k].getsize ? df(keyData[k].getsize) : "-" ,
+                keyData[k].setsize ? df(keyData[k].setsize) : "-"];
+            });
+            return rows;
+          }}
+
+         
+        />
+      </div>
+
+    </span>);
   }
+    
 }
-
-
-
-
-

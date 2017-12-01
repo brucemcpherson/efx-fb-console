@@ -3,10 +3,7 @@ import React from "react";
 import {
   acRangeFinish,
   acRangeStart,
-  acRangePeriod,
-  acAccountsSelectedRows,
-  acFetchBosses,
-  dispatchStats 
+  acRangePeriod
 }
 from '../../actions/index';
 import AccountSelection from './AccountSelection';
@@ -16,25 +13,24 @@ import DatePicker from 'material-ui/DatePicker';
 
 export default class extends React.Component {
 
-
- 
-  
   render() {
     
     const props = this.props;
 
     // we'll use the selected account later
-    const place = props.accounts.pageResults.accounts;
-    const selectedAccount = place.selectedItems ? place.selectedItems[0] : "";
+
+    const accountId = props.accounts.selectedAccounts[0];
 
     const itemStyle = {
       display:'inline-block',
       marginRight:8
     };
+    
     const dropperJsx = <AccountSelection 
-      accounts={props.accounts} 
+      data = {props.accounts.pageResults.accounts.data}
+      accountId={accountId} 
       label={"API usage for account"}
-      dispatch={props.dispatch}
+      handleAccountSelection = {props.handleAccountSelection}
       stats={props.stats} />;
 
     
@@ -50,8 +46,8 @@ export default class extends React.Component {
         style={itemStyle}
         value={this.props.stats.ranges.start}
         onChange={(e,value) => {
-        
-          this.props.dispatch  (acRangeStart(selectedAccount,moment(value).startOf('day').toDate(),this.props.stats.ranges.finish)); 
+
+          this.props.dispatch  (acRangeStart(accountId,moment(value).startOf('day').toDate(),this.props.stats.ranges.finish)); 
           
         }}
         formatDate={(d)=>moment(d).format("ll")}
@@ -67,7 +63,7 @@ export default class extends React.Component {
         style={itemStyle}
         value={this.props.stats.ranges.finish}
         onChange={(e,value) => {
-          this.props.dispatch  (acRangeFinish(selectedAccount,this.props.stats.ranges.start,moment(value).endOf('day').toDate()));
+          this.props.dispatch  (acRangeFinish(accountId,this.props.stats.ranges.start,moment(value).endOf('day').toDate()));
         }}
         formatDate={(d)=>moment(d).format("ll")}
         mode={"landscape"}

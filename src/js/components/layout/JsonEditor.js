@@ -249,7 +249,8 @@ export default class  extends React.Component {
               stats = {props.stats}
               generateKeys = {this.generateKeys}
               pageResults = {props.tutorial.pageResults.jsonKeyResults}
-            />
+              handleAccountSelection = {props.handleAccountSelection}
+            /> 
           </td>
           
         </tr>

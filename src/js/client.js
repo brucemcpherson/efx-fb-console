@@ -32,6 +32,7 @@ import AAlias from './pages/AAlias';
 import AReadAliasItem from './pages/AReadAliasItem';
 import ADemo from './pages/ADemo';
 import AJson from './pages/AJson';
+import ALocations from './pages/ALocations';
 import {
   Provider
 }
@@ -67,7 +68,7 @@ Process.xRef = {};
 Process.xRoutes = [
   
   {label: 'Home',component: Home},
-
+  {label: 'Links',component: ALocations},
   [{label: 'Accounts'}, 
   {label: 'Console',component: Console}, 
   {label: 'Dashboard',component: Dashboard},
@@ -75,7 +76,8 @@ Process.xRoutes = [
 
   [{label: 'Tutorial'},
     
-    [{label: 'Getting started'}, {label: 'Introduction',component: TIntroduction}, {label: 'Registering',component: TRegistering}, 
+    [{label: 'Getting started'}, 
+    {label: 'Introduction',component: TIntroduction}, {label: 'Registering',component: TRegistering}, 
      {label: 'Console',component: TConsole}, {label: 'Accounts',component: TAccounts}, 
      {label: 'Boss key',component: TBossKey}, 
      {label: 'API explorer',component: TApiExplorer}, {label: 'Summary',component: About}

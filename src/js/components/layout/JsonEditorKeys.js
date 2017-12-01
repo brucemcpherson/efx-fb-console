@@ -3,53 +3,56 @@ import XCard from '../XCard';
 import TextField from 'material-ui/TextField';
 import XSelect from '../XSelect';
 import AccountSelection from './AccountSelection';
-export default class  extends React.Component {
- 
-  constructor (props) {
+export default class extends React.Component {
+
+  constructor(props) {
     super();
     this.state = {
-      accountId:""
+      accountId: ""
     };
   }
-  
+
   componentWillReceiveProps = (props) => {
-  
-    const data = props.accounts.pageResults.bosses.data ;
+
+    const data = props.accounts.pageResults.bosses.data;
     const keys = data && data.keys;
     const defaultKey = keys && keys[0];
 
 
     // we'll track account id - if it changes, then we can make a new default boss
     if (defaultKey && data.accountId !== this.state.accountId) {
-      this.setState ({
-        accountId:data.accountId
-      }, function () {
-          props.changeKey({
-            type:'boss',
-            value:defaultKey
-          });
+      this.setState({
+        accountId: data.accountId
+      }, function() {
+        props.changeKey({
+          type: 'boss',
+          value: defaultKey
+        });
       });
     }
-   
+
   }
 
   render() {
-    
+
     const props = this.props;
     const itemStyle = {
-      display:'inline-block',
-      marginRight:8
+      display: 'inline-block',
+      marginRight: 8
     };
-    const options = (props.accounts.pageResults.bosses.data ? props.accounts.pageResults.bosses.data.keys : []) || [] ;
+    
+    // the known boss keys from the selected account
+    const options = (props.accounts.pageResults.bosses.data || []).map(d => d.key);
     const bossValue = props.jsonKeys.boss;
     const pr = props.pageResults;
-    
-    const xcs =  <XCard 
+    const accountId = props.accounts.selectedAccounts[0];
+    const xcs = <XCard 
       initiallyExpanded = {true}
       title = {props.title}
       subtitle ={props.subtitle}
       content = { 
         <span> 
+          
           <div>
             <TextField
               floatingLabelText={`Writer key to create items`}
@@ -59,10 +62,9 @@ export default class  extends React.Component {
                 type:'writer',
                 value:event.target.value
               })}
-              multiLine = {false}
-            />
+              multiLine = {false} /> 
           </div>
-            
+
           <div>
             <TextField
               floatingLabelText={`Reader key(s)`}
@@ -72,23 +74,24 @@ export default class  extends React.Component {
                 type:'reader',
                 value:event.target.value
               })}
-              multiLine = {true}
-            />
-
-            <TextField
-              floatingLabelText={`updater key(s)`}
-              value = {props.jsonKeys.updater}
-              disabled = {false}
-              onChange = {(event)=>props.changeKey({
-                type:'updater',
-                value:event.target.value
-              })}
-              multiLine = {true}
-            />
+              multiLine = {true} />
           </div>
           
           <div>
-         
+            <TextField
+              floatingLabelText = { `updater key(s)` }
+              value = { props.jsonKeys.updater }
+              disabled = { false }
+              onChange = {
+                (event) => props.changeKey({
+                  type: 'updater',
+                  value: event.target.value
+                })
+              }
+              multiLine = { true }/> 
+          </div>
+          
+          <div>
             <TextField
               floatingLabelText={`Item id`}
               value = {props.jsonKeys.item}
@@ -97,64 +100,60 @@ export default class  extends React.Component {
                 type:'item',
                 value:event.target.value
               })}
-              multiLine = {false}
-            />
-
-            <TextField
-              floatingLabelText={`Alias to read or assign`}
-              value = {props.jsonKeys.alias}
-              disabled = {false}
-              onChange = {(event)=>props.changeKey({
-                type:'alias',
-                value:event.target.value
-              })}
-              multiLine = {false}
-            />
+              multiLine = {false} />
           </div>
           
-          <AccountSelection 
-            accounts={props.accounts} 
-            label={"Account to use for key generation"}
-            dispatch={props.dispatch}
-            stats={props.stats}
-            onChange = {(value) => {
-             
-             props.changeKey({
-               type:'account',
-               value:value
-             });
-             
+          <div>
+            <TextField
+              floatingLabelText = { `Alias to read or assign` }
+              value = { props.jsonKeys.alias }
+              disabled = { false }
+              onChange = {
+                (event) => props.changeKey({
+                  type: 'alias',
+                  value: event.target.value
+                })
+              }
+              multiLine = { false }/> 
+          </div>
+          
+          <div>
+            <AccountSelection 
+              data = {props.accounts.pageResults.accounts.data}
+              accountId={accountId} 
+              label={"Account to use for key generation"}
+              handleAccountSelection = {props.handleAccountSelection}
+              stats={props.stats} />
+          </div>
 
-            }}
-          />
-
-          <XSelect 
-            accounts={props.accounts} 
-            label={"Boss to use for key generation"}
-            onChange = {(value) => props.changeKey({
-                type:'boss',
-                value:value
-              })}
-            value = {bossValue}
-            style={itemStyle}
-            options = {options}
-          />
-            
-        </span>
-      }
-      cardActions = {[{
-          name:'generate',
-          action:props.generateKeys,
-          primary:true,
-          disabled: (!props.jsonKeys.boss) || (pr&&pr.active)
-        }]}
-
-      />;
-
-        
-    return <span>{xcs}</span>;
-
-
+          <div>
+            <XSelect 
+              accounts={props.accounts} 
+              label={"Boss to use for key generation"}
+              onChange = {(value) => props.changeKey({
+                  type:'boss',
+                  value:value   
+                })}
+              value = {bossValue}
+              style={itemStyle}
+              options = {options} />
+          </div>
+          
+      </span>
   }
+  cardActions = {
+    [{
+      name: 'generate',
+      action: props.generateKeys,
+      primary: true,
+      disabled: (!props.jsonKeys.boss) || (pr && pr.active)
+    }]
+  }
+
+  />;
+
+  return <span>{xcs}</span>;
+
+
 }
- 
+}
